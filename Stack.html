@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090d16">
+<title>Night Shift · Garage Stack</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg:#090d16; --panel:#101722; --line:#243140; --text:#eef4fa;
+  --muted:#8493a4; --lime:#c5f36a; --cyan:#76d8ec; --red:#ff747f;
+  --amber:#ffc66e;
+}
+* { box-sizing:border-box }
+body {
+  margin:0; min-height:100vh; color:var(--text);
+  background:radial-gradient(ellipse at 18% -12%,#1c2c35 0,transparent 40%),
+             radial-gradient(ellipse at 96% 50%,#14172b 0,transparent 34%),var(--bg);
+  font-family:Manrope,system-ui,sans-serif;
+}
+button,input,select { font:inherit }
+button { cursor:pointer }
+.shell { max-width:1220px; margin:auto; padding:28px 32px 44px }
+.topbar,.hero,.cardhead,.bottomline,.activityhead {
+  display:flex; align-items:center; justify-content:space-between;
+}
+.topbar { margin-bottom:36px }
+.brand { display:flex; align-items:center; gap:12px }
+.brandmark {
+  width:40px; height:40px; border-radius:13px; background:var(--lime);
+  display:grid; place-items:center; color:#142015;
+}
+.brandmark svg { width:22px }
+.brandname { font-size:13px; font-weight:800; letter-spacing:.13em }
+.brandname span {
+  display:block; color:var(--muted); font:10px 'DM Mono',monospace;
+  letter-spacing:.12em; margin-top:3px;
+}
+.live {
+  display:flex; align-items:center; gap:9px; border:1px solid var(--line);
+  background:#101722b5; padding:9px 13px; border-radius:999px;
+  color:#b8c4d1; font:10px 'DM Mono',monospace; letter-spacing:.1em;
+}
+.dot { width:7px; height:7px; border-radius:50%; background:var(--lime); box-shadow:0 0 12px var(--lime) }
+.hero { align-items:flex-end; gap:18px; margin-bottom:27px }
+.eyebrow {
+  color:var(--lime); font:10px 'DM Mono',monospace; letter-spacing:.18em;
+  text-transform:uppercase; margin:0 0 12px;
+}
+h1 { margin:0; font-size:clamp(34px,5vw,55px); letter-spacing:-.06em; line-height:1.03 }
+h1 span { color:var(--muted); font-weight:500 }
+.sub { color:var(--muted); font-size:13px; line-height:1.7; margin:13px 0 0; max-width:500px }
+.datebox { text-align:right; font:10px 'DM Mono',monospace; color:var(--muted); letter-spacing:.1em; line-height:1.8 }
+.datebox strong { display:block; color:#e4ebf1; font-size:12px; font-weight:500 }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:19px }
+.stat {
+  background:linear-gradient(145deg,#121b26,#0e151f); border:1px solid var(--line);
+  border-radius:16px; padding:16px 18px;
+}
+.stat-label { color:var(--muted); font:10px 'DM Mono',monospace; letter-spacing:.11em; text-transform:uppercase }
+.stat-value { font-size:27px; font-weight:700; letter-spacing:-.05em; margin-top:10px }
+.stat-value small { font-size:12px; color:var(--muted); font-weight:500; letter-spacing:0 }
+.layout { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(285px,.8fr); gap:17px }
+.card { background:linear-gradient(150deg,#121b26ef,#0e151fed); border:1px solid var(--line); border-radius:19px; overflow:hidden }
+.cardhead { padding:18px 20px; border-bottom:1px solid #243140b8 }
+.cardtitle { font-size:13px; font-weight:700; display:flex; align-items:center; gap:9px }
+.cardtitle svg { color:var(--lime); width:16px; height:16px }
+.cardmeta { font:10px 'DM Mono',monospace; color:var(--muted); letter-spacing:.08em }
+.garage { padding:19px 20px 20px; min-height:375px; background:linear-gradient(180deg,#111a24,#0c131c) }
+.lane-label { display:flex; justify-content:space-between; color:#6c7a8a; font:9px 'DM Mono',monospace; letter-spacing:.16em; margin-bottom:16px }
+.lane {
+  position:relative; min-height:285px; border:1px solid #344353; border-bottom:0;
+  border-radius:12px 12px 0 0; padding:12px 18px 0; display:flex;
+  flex-direction:column-reverse; gap:7px;
+  background:linear-gradient(90deg,#ffffff03 0,#ffffff00 13%,#ffffff04 50%,#ffffff00 88%,#ffffff03 100%);
+}
+.lane:before,.lane:after {
+  content:''; position:absolute; top:0; bottom:0; width:2px;
+  background:repeating-linear-gradient(to bottom,#68788966 0 8px,transparent 8px 17px);
+}
+.lane:before { left:7px } .lane:after { right:7px }
+.lane.empty { justify-content:center; align-items:center; flex-direction:column; color:#687889 }
+.emptymsg { text-align:center; z-index:1 }
+.emptymsg div { font-size:13px; font-weight:700; color:#b7c3ce; margin-bottom:5px }
+.emptymsg small { font-size:11px; color:#778596 }
+.car-row {
+  position:relative; z-index:1; min-height:49px; border:1px solid #374858;
+  border-radius:10px; background:linear-gradient(90deg,#192531,#15212c);
+  display:flex; align-items:center; justify-content:space-between; padding:7px 12px 7px 10px;
+  animation:arrive .28s ease-out;
+}
+.car-row.newest { border-color:#c5f36a87; background:linear-gradient(90deg,#26331e,#19251e) }
+.car-row.blocker { border-color:#ff747f75; background:linear-gradient(90deg,#341f28,#1d1c28) }
+@keyframes arrive { from {opacity:0;transform:translateY(8px)} to {opacity:1;transform:translateY(0)} }
+.car-left { display:flex; align-items:center; gap:11px }
+.car-icon { width:31px; height:31px; border-radius:9px; display:grid; place-items:center; color:var(--cyan); background:#76d8ec12 }
+.car-icon svg { width:20px }
+.newest .car-icon { color:var(--lime); background:#c5f36a14 }
+.blocker .car-icon { color:var(--red); background:#ff747f13 }
+.plate { font:12px 'DM Mono',monospace; font-weight:500; letter-spacing:.06em }
+.car-sub { color:#8493a4; font-size:10px; margin-top:3px }
+.car-tag { border:1px solid #405162; border-radius:99px; padding:5px 8px; font:9px 'DM Mono',monospace; color:#aeb9c5 }
+.newest .car-tag { border-color:#c5f36a5b; color:var(--lime) }
+.blocker .car-tag { border-color:#ff747f55; color:var(--red) }
+.lane-exit { position:absolute; right:-1px; bottom:-21px; color:#91a0af; font:9px 'DM Mono',monospace; letter-spacing:.12em; display:flex; align-items:center; gap:8px }
+.exit-line { width:35px; height:1px; background:linear-gradient(90deg,#607082,transparent) }
+.bottomline { padding:23px 3px 0; color:#738294; font:9px 'DM Mono',monospace; letter-spacing:.1em }
+.legend { display:flex; gap:14px }
+.legend span { display:flex; align-items:center; gap:6px }
+.legend i { width:6px; height:6px; border-radius:50%; background:var(--lime) }
+.legend .red i { background:var(--red) }
+.side { display:flex; flex-direction:column; gap:15px }
+.control,.activity { padding:18px }
+.control h2,.activity h2 { font-size:13px; margin:0 0 5px }
+.control>p { font-size:11px; color:var(--muted); margin:0 0 16px; line-height:1.6 }
+.fieldlabel { display:block; color:#9ba9b7; font:9px 'DM Mono',monospace; letter-spacing:.11em; margin:0 0 7px }
+.inputrow { display:flex; gap:8px }
+.inputrow input,.control select {
+  width:100%; min-width:0; color:var(--text); background:#0a111a;
+  border:1px solid #2b3b49; border-radius:10px; padding:11px 12px;
+  outline:none; font:12px 'DM Mono',monospace;
+}
+.inputrow input:focus { border-color:#c5f36a88; box-shadow:0 0 0 3px #c5f36a10 }
+.addbtn,.removebtn,.clearbtn { border-radius:10px; font-size:11px; font-weight:800 }
+.addbtn { border:0; background:var(--lime); color:#182110; padding:0 13px; white-space:nowrap }
+.removebtn { width:100%; padding:11px; background:#263a2c; color:var(--lime); border:1px solid #c5f36a45 }
+.removebtn:disabled { opacity:.38; cursor:not-allowed }
+.divider { height:1px; background:var(--line); margin:17px 0 }
+.retrievebox,.note { background:#0c141d; border:1px solid #263542; border-radius:12px; padding:12px }
+.retrievebox { margin:12px 0 }
+.tiny { font:9px 'DM Mono',monospace; color:#8593a2; letter-spacing:.1em }
+.retrieve-main { margin-top:9px; font:13px 'DM Mono',monospace; color:#eff5fa }
+.retrieve-note { font-size:10px; color:#9aa8b6; margin-top:7px; line-height:1.6 }
+.retrieve-note strong { color:var(--amber) }
+.activity { flex:1; min-height:132px }
+.activityhead { margin-bottom:12px }
+.activityhead h2 { margin:0; font-size:12px }
+.activityhead span { font:9px 'DM Mono',monospace; color:var(--muted) }
+.events { display:flex; flex-direction:column; gap:9px; max-height:142px; overflow:auto }
+.event { display:flex; gap:9px; color:#9aa8b6; font-size:10px; line-height:1.5 }
+.event i { width:6px; height:6px; border-radius:50%; background:#586879; margin-top:4px; flex:none }
+.event.add i { background:var(--lime) } .event.out i { background:var(--cyan) } .event.warn i { background:var(--amber) }
+.event time { display:block; color:#667687; font:9px 'DM Mono',monospace; margin-top:2px }
+.note { display:flex; gap:10px }
+.note-icon { color:var(--amber) }
+.note p { font-size:10px; color:#93a1b0; line-height:1.65; margin:0 }
+.note strong { color:#d9e3eb }
+.toast {
+  position:fixed; bottom:22px; left:50%; transform:translate(-50%,14px); opacity:0;
+  transition:.23s; background:#1b2a22; border:1px solid #c5f36a66; color:#e6f6ce;
+  padding:10px 15px; border-radius:99px; font-size:11px; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translate(-50%,0) }
+.toast.error { background:#2d1c22; border-color:#ff747f77; color:#ffdce0 }
+.footer { text-align:center; color:#526171; font:9px 'DM Mono',monospace; letter-spacing:.09em; margin-top:22px }
+@media(max-width:820px) {
+  .layout { grid-template-columns:1fr }
+  .side { display:grid; grid-template-columns:1fr 1fr }
+  .control { grid-row:span 2 }
+  .hero { align-items:flex-start }
+  .datebox { padding-top:3px }
+}
+@media(max-width:560px) {
+  .shell { padding:20px 15px 30px }
+  .topbar { margin-bottom:28px }
+  .hero { display:block }
+  .datebox { text-align:left; margin-top:14px }
+  .stats { gap:8px }
+  .stat { padding:13px 12px }
+  .stat-label { font-size:8px }
+  .stat-value { font-size:23px }
+  .side { display:flex }
+  .garage { padding:16px 13px 20px; min-height:335px }
+  .lane { min-height:250px; padding-left:14px; padding-right:14px }
+  .bottomline { font-size:8px }
+  .legend { gap:9px }
+}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandmark">▤</div>
+      <div class="brandname">NIGHT SHIFT<span>GARAGE OPERATIONS / UNIT 04</span></div>
+    </div>
+    <div class="live"><i class="dot"></i> SYSTEM ONLINE</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Single-lane parking · Stack simulator</p>
+      <h1>Garage <span>control.</span></h1>
+      <p class="sub">One lane. One way out. Parked cars behave like a stack: the newest arrival is always closest to the exit.</p>
+    </div>
+    <div class="datebox">FACILITY STATUS<strong id="statusText">READY FOR ARRIVALS</strong>CAPACITY <span id="capacityText">0 / 8 BAYS</span></div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><div class="stat-label">▰ Cars in lane</div><div class="stat-value"><span id="carsCount">0</span><small> / 8</small></div></div>
+    <div class="stat"><div class="stat-label">↗ Exit is clear</div><div class="stat-value" id="exitClear">—</div></div>
+    <div class="stat"><div class="stat-label">⤴ Moves required</div><div class="stat-value" id="moveCount">—</div></div>
+  </section>
+
+  <section class="layout">
+    <div class="card">
+      <div class="cardhead">
+        <div class="cardtitle">▱ BAY 01 <span style="color:#607080">/</span> SINGLE LANE</div>
+        <div class="cardmeta" id="laneMeta">STACK · EMPTY</div>
+      </div>
+      <div class="garage">
+        <div class="lane-label"><span>← Entry · arrivals</span><span>One-way traffic</span></div>
+        <div class="lane empty" id="lane">
+          <div class="emptymsg"><div>Lane is clear</div><small>Add a vehicle to start the shift</small></div>
+          <div class="lane-exit"><span class="exit-line"></span>EXIT GATE →</div>
+        </div>
+        <div class="bottomline">
+          <span>TOP OF STACK = NEAREST TO EXIT</span>
+          <div class="legend"><span><i></i> Latest arrival</span><span class="red"><i></i> In the way</span></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card control">
+        <h2>Vehicle control</h2>
+        <p>Log an arrival or retrieve a parked car. The lane has one exit, so cars after the requested one must move first.</p>
+        <label class="fieldlabel" for="plateInput">Vehicle registration</label>
+        <form class="inputrow" id="arrivalForm">
+          <input id="plateInput" maxlength="10" placeholder="e.g. 7ABC204" autocomplete="off" aria-label="Vehicle registration">
+          <button class="addbtn" type="submit">+ Park</button>
+        </form>
+        <div class="divider"></div>
+        <label class="fieldlabel" for="retrieveSelect">Retrieve a vehicle</label>
+        <div class="retrievebox">
+          <div class="tiny">Retrieval plan</div>
+          <div class="retrieve-main" id="retrieveMain">Select a parked car</div>
+          <div class="retrieve-note" id="retrieveNote">We’ll show how many cars must be moved to clear the way.</div>
+        </div>
+        <select id="retrieveSelect" aria-label="Choose vehicle to retrieve">
+          <option value="">Choose registration…</option>
+        </select>
+        <button class="removebtn" id="retrieveBtn" disabled>↗ &nbsp; Retrieve vehicle</button>
+        <button class="clearbtn" id="resetBtn" style="display:block;width:100%;background:transparent;color:#8291a0;padding:12px 0 0">Reset garage</button>
+      </div>
+
+      <div class="card activity">
+        <div class="activityhead"><h2>Shift activity</h2><span>LIVE LOG</span></div>
+        <div class="events" id="events"></div>
+      </div>
+
+      <div class="note">
+        <div class="note-icon">✳</div>
+        <p><strong>Stack logic:</strong> Cars enter one at a time. To retrieve a car deeper in the lane, vehicles on top of it must temporarily move first—last in, first out.</p>
+      </div>
+    </aside>
+  </section>
+
+  <footer class="footer">NIGHT SHIFT GARAGE SYSTEMS · STACK MODEL / LIFO</footer>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const CAPACITY=8;
+let cars=[];
+let events=[];
+let toastTimer;
+const $=id=>document.getElementById(id);
+const lane=$('lane');
+
+function carSvg(){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m5 11 1.5-4h11L19 11M4 11h16l1 3v4h-2v-2H5v2H3v-4l1-3Z"/><path d="M7 11h10M7 14h.01M17 14h.01"/></svg>';
+}
+function toast(message,error=false){
+  const t=$('toast');
+  t.textContent=message;
+  t.classList.toggle('error',error);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2300);
+}
+function log(message,type=''){
+  events.unshift({message,type,time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+  events=events.slice(0,12);
+  renderEvents();
+}
+function renderEvents(){
+  $('events').innerHTML=events.map(e=>`<div class="event ${e.type}"><i></i><div>${e.message}<time>${e.time}</time></div></div>`).join('')||
+    '<div class="event"><i></i><div>No activity yet.<time>—</time></div></div>';
+}
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function render(){
+  $('carsCount').textContent=cars.length;
+  $('capacityText').textContent=`${cars.length} / ${CAPACITY} BAYS`;
+  $('laneMeta').textContent=`STACK · ${cars.length?String(cars.length).padStart(2,'0')+' VEHICLE'+(cars.length===1?'':'S'):'EMPTY'}`;
+  $('statusText').textContent=cars.length===CAPACITY?'CAPACITY REACHED':cars.length?'ACTIVE · RECEIVING CARS':'READY FOR ARRIVALS';
+  $('exitClear').textContent=cars.length?'NO':'YES';
+  $('moveCount').textContent=cars.length?'—':'0';
+  $('moveCount').style.color=cars.length?'var(--amber)':'var(--lime)';
+  lane.classList.toggle('empty',cars.length===0);
+
+  const exit=lane.querySelector('.lane-exit');
+  lane.innerHTML='';
+  if(!cars.length){
+    lane.innerHTML='<div class="emptymsg"><div>Lane is clear</div><small>Add a vehicle to start the shift</small></div>';
+  }else{
+    cars.forEach((car,i)=>{
+      const row=document.createElement('div');
+      row.className='car-row'+(i===cars.length-1?' newest':'');
+      row.dataset.id=car.id;
+      row.innerHTML=`<div class="car-left"><div class="car-icon">${carSvg()}</div><div><div class="plate">${escapeHtml(car.plate)}</div><div class="car-sub">${i===cars.length-1?'Nearest to exit':`Position ${i+1} · arrived ${car.time}`}</div></div></div><span class="car-tag">${i===cars.length-1?'TOP OF STACK':`BAY ${String(i+1).padStart(2,'0')}`}</span>`;
+      lane.appendChild(row);
+    });
+  }
+  lane.appendChild(exit);
+
+  const select=$('retrieveSelect');
+  const old=select.value;
+  select.innerHTML='<option value="">Choose registration…</option>'+cars.map(c=>`<option value="${c.id}">${escapeHtml(c.plate)}${c.id===cars.at(-1)?.id?' · at exit':''}</option>`).join('');
+  if(cars.some(c=>c.id===old)) select.value=old;
+  updatePlan();
+}
+function updatePlan(){
+  const id=$('retrieveSelect').value;
+  const idx=cars.findIndex(c=>c.id===id);
+  $('retrieveBtn').disabled=idx<0;
+  if(idx<0){
+    $('retrieveMain').textContent='Select a parked car';
+    $('retrieveNote').textContent='We’ll show how many cars must be moved to clear the way.';
+    $('moveCount').textContent=cars.length?'—':'0';
+    $('moveCount').style.color=cars.length?'var(--amber)':'var(--lime)';
+    document.querySelectorAll('.car-row').forEach(r=>r.classList.remove('blocker'));
+    return;
+  }
+  const count=cars.length-1-idx;
+  const car=cars[idx];
+  $('retrieveMain').textContent=car.plate;
+  $('retrieveNote').innerHTML=count
+    ? `<strong>${count} vehicle${count===1?'':'s'}</strong> parked after this one must move out first. Then retrieve ${escapeHtml(car.plate)}.`
+    : `This car is at the top of the stack. It can exit right away.`;
+  $('moveCount').textContent=count;
+  $('moveCount').style.color=count?'var(--amber)':'var(--lime)';
+  document.querySelectorAll('.car-row').forEach((r,i)=>r.classList.toggle('blocker',i>idx));
+}
+$('arrivalForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const field=$('plateInput');
+  const plate=field.value.trim().toUpperCase().replace(/\s+/g,' ');
+  if(!plate){toast('Enter a vehicle registration first.',true);field.focus();return}
+  if(cars.length>=CAPACITY){toast('Garage is full. Retrieve a vehicle first.',true);return}
+  if(cars.some(c=>c.plate===plate)){toast(`${plate} is already parked.`,true);return}
+  const time=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  cars.push({id:crypto.randomUUID(),plate,time});
+  field.value='';
+  log(`<strong>${escapeHtml(plate)}</strong> entered · pushed onto the stack.`,'add');
+  render();
+  toast(`${plate} parked successfully.`);
+});
+$('retrieveSelect').addEventListener('change',updatePlan);
+$('retrieveBtn').addEventListener('click',()=>{
+  const id=$('retrieveSelect').value;
+  const idx=cars.findIndex(c=>c.id===id);
+  if(idx<0)return;
+  const [target]=cars.splice(idx,1);
+  if(idx<cars.length){
+    log(`<strong>${escapeHtml(target.plate)}</strong> retrieved after temporarily moving ${cars.length-idx} vehicle${cars.length-idx===1?'':'s'}.`,'warn');
+  }else{
+    log(`<strong>${escapeHtml(target.plate)}</strong> exited from the top of the stack.`,'out');
+  }
+  render();
+  $('retrieveSelect').value='';
+  updatePlan();
+  toast(`${target.plate} retrieved.`);
+});
+$('resetBtn').addEventListener('click',()=>{
+  if(!cars.length){toast('The garage is already empty.');return}
+  const count=cars.length;
+  cars=[];
+  log(`Garage cleared · ${count} vehicle${count===1?'':'s'} removed.`,'warn');
+  render();
+  toast('Garage reset.');
+});
+log('Garage initialized. Ready for arrivals.');
+render();
+</script>
+</body>
+</html>
